@@ -1,6 +1,6 @@
 import os
 import cv2
-import imageio
+import tifffile as tf
 
 def converter_bw_concatenar(input_path, output_path):
     # Verifica se o diretório de saída existe, se não, cria
@@ -15,7 +15,7 @@ def converter_bw_concatenar(input_path, output_path):
         imagem_path = os.path.join(input_path, imagem_nome)
 
         # Lê todas as páginas da imagem TIFF
-        imagens_tiff = imageio.mimread(imagem_path)
+        imagens_tiff = tf.imread(imagem_path)
 
         imagens_concatenadas = []  # Lista para armazenar imagens de cada página
 
