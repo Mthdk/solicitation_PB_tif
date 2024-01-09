@@ -1,48 +1,42 @@
-from PIL import Image
 import os
-import pytesseract
+import cv2
+import imageio
 
-def converte_para_pb(diretorio_origem, diretorio_destino):
-    # Altera o diretório de trabalho para o diretório do script
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+def converter_bw_concatenar(input_path, output_path):
+    # Verifica se o diretório de saída existe, se não, cria
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
 
-    # Certifica-se de que o diretório de destino existe
-    if not os.path.exists(diretorio_destino):
-        os.makedirs(diretorio_destino)
+    # Lista todos os arquivos .tif ou .tiff no diretório de entrada
+    imagens = [file for file in os.listdir(input_path) if file.lower().endswith(('.tif', '.tiff'))]
 
-    # Lista todos os arquivos no diretório de origem
-    arquivos = os.listdir(diretorio_origem)
+    for imagem_nome in imagens:
+        # Caminho completo para a imagem
+        imagem_path = os.path.join(input_path, imagem_nome)
 
-    for arquivo in arquivos:
-        caminho_arquivo = os.path.join(diretorio_origem, arquivo)
+        # Lê todas as páginas da imagem TIFF
+        imagens_tiff = imageio.mimread(imagem_path)
 
-        # Verifica se é um arquivo do tipo tif
-        if arquivo.lower().endswith(".tif"):
-            # Abre a imagem TIFF
-            imagem_tif = Image.open(caminho_arquivo)
+        imagens_concatenadas = []  # Lista para armazenar imagens de cada página
 
-            # Obtém o número de páginas na imagem TIFF
-            numero_paginas = imagem_tif.n_frames
+        for idx, pagina in enumerate(imagens_tiff):
+            # Converte a página para escala de cinza
+            pagina_bw = cv2.cvtColor(pagina, cv2.COLOR_BGR2GRAY)
 
-            for pagina_numero in range(numero_paginas):
-                # Carrega a página da imagem
-                imagem_tif.seek(pagina_numero)
-                imagem = imagem_tif.copy()
+            # Adiciona a página à lista
+            imagens_concatenadas.append(pagina_bw)
 
-                # Converte para preto e branco
-                imagem_pb = imagem.convert("L")
+        # Concatena as imagens verticalmente
+        imagem_concatenada = cv2.vconcat(imagens_concatenadas)
 
-                # Define o caminho de destino
-                caminho_destino = os.path.join(diretorio_destino, f"pb_{arquivo}_pagina{pagina_numero + 1}.tif")
-
-                # Salva a imagem no diretório de destino
-                imagem_pb.save(caminho_destino)
-
-                print(f"Imagem convertida: {caminho_destino}")
+        # Salva a imagem concatenada no diretório de saída
+        nome_arquivo_concatenado = f"{os.path.splitext(imagem_nome)[0]}_concatenado.png"
+        caminho_saida_concatenado = os.path.join(output_path, nome_arquivo_concatenado)
+        cv2.imwrite(caminho_saida_concatenado, imagem_concatenada)
 
 if __name__ == "__main__":
-    # Substitua 'diretorio_x' e 'diretorio_y' pelos seus diretórios reais
-    diretorio_x = "caminho/do/seu/diretorio_x"
-    diretorio_y = "caminho/do/seu/diretorio_y"
+    # Diretório de entrada e saída
+    diretorio_entrada = "Caminho\\para\\diretorio_X"
+    diretorio_saida = "Caminho\\para\\diretorio_Y"
 
-    converte_para_pb(diretorio_x, diretorio_y)
+    converter_bw_concatenar(diretorio_entrada, diretorio_saida)
