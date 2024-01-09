@@ -1,5 +1,5 @@
 import os
-from PIL import Image
+from PIL import Image, TiffImagePlugin
 
 def converter_bw_concatenar(input_path, output_path):
     # Verifica se o diretório de saída existe, se não, cria
@@ -9,14 +9,14 @@ def converter_bw_concatenar(input_path, output_path):
     # Lista todos os arquivos .tif ou .tiff no diretório de entrada
     imagens = [file for file in os.listdir(input_path) if file.lower().endswith(('.tif', '.tiff'))]
 
+    imagens_concatenadas = []  # Lista para armazenar imagens de cada página
+
     for imagem_nome in imagens:
         # Caminho completo para a imagem
         imagem_path = os.path.join(input_path, imagem_nome)
 
         # Abre a imagem TIFF usando Pillow
         imagem_tiff = Image.open(imagem_path)
-
-        imagens_concatenadas = []  # Lista para armazenar imagens de cada página
 
         for idx in range(imagem_tiff.n_frames):
             # Seleciona a página
@@ -28,17 +28,15 @@ def converter_bw_concatenar(input_path, output_path):
             # Adiciona a página à lista
             imagens_concatenadas.append(pagina_bw)
 
-        # Concatena as imagens verticalmente
-        imagem_concatenada = Image.new("L", (imagens_concatenadas[0].width, sum(imagem.height for imagem in imagens_concatenadas)))
-        offset = 0
-        for imagem in imagens_concatenadas:
-            imagem_concatenada.paste(imagem, (0, offset))
-            offset += imagem.height
+    # Salva as imagens concatenadas como páginas em um único arquivo TIFF
+    nome_arquivo_concatenado = "concatenado.tif"
+    caminho_saida_concatenado = os.path.join(output_path, nome_arquivo_concatenado)
 
-        # Salva a imagem concatenada no diretório de saída
-        nome_arquivo_concatenado = f"{os.path.splitext(imagem_nome)[0]}_concatenado.png"
-        caminho_saida_concatenado = os.path.join(output_path, nome_arquivo_concatenado)
-        imagem_concatenada.save(caminho_saida_concatenado)
+    # Cria um novo arquivo TIFF
+    with TiffImagePlugin.AppendingTiffWriter(caminho_saida_concatenado, True) as tf:
+        for imagem in imagens_concatenadas:
+            # Adiciona cada página como um quadro ao arquivo TIFF
+            tf.write(imagem)
 
 if __name__ == "__main__":
     # Diretório de entrada e saída
