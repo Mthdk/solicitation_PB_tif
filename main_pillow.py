@@ -46,7 +46,7 @@ def converter_bw_concatenar(input_path, output_path):
     # Salva a imagem concatenada no diretório de saída em formato TIFF
     nome_arquivo_concatenado = "concatenado.tif"
     caminho_saida_concatenado = os.path.join(output_path, nome_arquivo_concatenado)
-    tf.imwrite(caminho_saida_concatenado, imagem_concatenada, compress=6)  # Você pode ajustar o nível de compressão conforme necessário
+    tf.imwrite(caminho_saida_concatenado, imagem_concatenada)
 
 if __name__ == "__main__":
     # Diretório de entrada e saída
