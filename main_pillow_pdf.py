@@ -2,7 +2,7 @@ import os
 import numpy as np
 from PIL import Image
 import tifffile as tf
-import fitz  # PyMuPDF
+from reportlab.pdfgen import canvas
 
 def redimensionar_pagina(pagina, nova_largura):
     largura_original = pagina.shape[1]
@@ -47,18 +47,23 @@ def converter_bw_separar_unir(input_path, output_path):
             caminho_saida_tratado = os.path.join(output_path, nome_arquivo_tratado)
             tf.imwrite(caminho_saida_tratado, pagina_redimensionada)
 
-    # União das páginas em um único arquivo com várias páginas
-    nome_arquivo_unido = "unido.tif"
+    # União das páginas em um único arquivo PDF
+    nome_arquivo_unido = "unido.pdf"
     caminho_saida_unido = os.path.join(output_path, nome_arquivo_unido)
 
-    # Criando um arquivo PDF temporário para unir as imagens
-    with fitz.open() as pdf_document:
-        for imagem in imagens_tratadas:
-            img = fitz.open(fitz.IFD_TIFF, imagem.tobytes())
-            pdf_document.insert_pdf(img)
+    # Criando o arquivo PDF
+    with open(caminho_saida_unido, 'wb') as pdf_file:
+        c = canvas.Canvas(pdf_file)
 
-        # Salva o documento PDF
-        pdf_document.save(caminho_saida_unido, incremental=True)
+        for imagem in imagens_tratadas:
+            # Adiciona a imagem ao PDF
+            img_data = Image.fromarray(imagem).tobytes("raw", "L")
+            c.drawImage(img_data, 0, 0, width=nova_largura, height=imagem.shape[0])
+
+            # Adiciona uma nova página ao PDF
+            c.showPage()
+
+        c.save()
 
 if __name__ == "__main__":
     # Diretório de entrada e saída
