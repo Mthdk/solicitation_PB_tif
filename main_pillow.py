@@ -3,6 +3,12 @@ import numpy as np
 from PIL import Image
 import tifffile as tf
 
+def redimensionar_pagina(pagina, nova_largura):
+    largura_original = pagina.shape[1]
+    fator_redimensionamento = nova_largura / largura_original
+    nova_altura = int(pagina.shape[0] * fator_redimensionamento)
+    return np.array(Image.fromarray(pagina).resize((nova_largura, nova_altura)))
+
 def converter_bw_concatenar(input_path, output_path):
     # Verifica se o diretório de saída existe, se não, cria
     if not os.path.exists(output_path):
@@ -12,6 +18,7 @@ def converter_bw_concatenar(input_path, output_path):
     imagens = [file for file in os.listdir(input_path) if file.lower().endswith(('.tif', '.tiff'))]
 
     imagens_concatenadas = []  # Lista para armazenar imagens de cada página
+    nova_largura = 2496  # Largura desejada para redimensionamento
 
     for imagem_nome in imagens:
         # Caminho completo para a imagem
@@ -25,10 +32,13 @@ def converter_bw_concatenar(input_path, output_path):
             imagem_tiff.seek(idx)
 
             # Converte a página para escala de cinza
-            pagina_bw = imagem_tiff.convert("L")
+            pagina_bw = np.array(imagem_tiff.convert("L"))
+
+            # Redimensiona a página para ter a mesma largura
+            pagina_redimensionada = redimensionar_pagina(pagina_bw, nova_largura)
 
             # Adiciona a página à lista
-            imagens_concatenadas.append(np.array(pagina_bw))
+            imagens_concatenadas.append(pagina_redimensionada)
 
     # Concatena as imagens verticalmente
     imagem_concatenada = np.concatenate(imagens_concatenadas, axis=0)
