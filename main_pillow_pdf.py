@@ -65,9 +65,34 @@ def converter_bw_separar_unir(input_path, output_path):
 
         c.save()
 
+def unir_imagens(input_path):
+    imagens = [file for file in os.listdir(input_path) if file.lower().endswith('_tratada.tif')]
+    imagens_a_unir = {}
+
+    # Encontrando imagens a serem unidas
+    for imagem_nome in imagens:
+        nome_base = "_".join(imagem_nome.split("_")[:-3])  # Obtém o nome base antes do sufixo "_pagina_x_tratada"
+        if nome_base not in imagens_a_unir:
+            imagens_a_unir[nome_base] = [imagem_nome]
+        else:
+            imagens_a_unir[nome_base].append(imagem_nome)
+
+    # Unindo imagens e renomeando
+    for nome_base, imagens_lista in imagens_a_unir.items():
+        if len(imagens_lista) > 1:
+            imagens_unidas = [np.array(Image.open(os.path.join(input_path, imagem))) for imagem in imagens_lista]
+            imagem_concatenada = np.concatenate(imagens_unidas, axis=0)
+            caminho_saida_unido = os.path.join(input_path, f"{nome_base}_unido.tif")
+            tf.imwrite(caminho_saida_unido, imagem_concatenada)
+
+            # Removendo imagens antigas
+            for imagem in imagens_lista:
+                os.remove(os.path.join(input_path, imagem))
+
 if __name__ == "__main__":
     # Diretório de entrada e saída
     diretorio_entrada = "Caminho\\para\\diretorio_X"
     diretorio_saida = "Caminho\\para\\diretorio_Y"
 
     converter_bw_separar_unir(diretorio_entrada, diretorio_saida)
+    unir_imagens(diretorio_saida)
